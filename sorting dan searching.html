@@ -1,0 +1,1495 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Visualisasi Algoritma Sorting & Searching - Alat edukasi interaktif untuk memahami Bubble Sort, Selection Sort, Quick Sort, Merge Sort, Linear Search, dan Binary Search."
+    />
+    <title>Sorting & Searching Visualizer</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ========== CSS Reset & Variables ========== */
+      *,
+      *::before,
+      *::after {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-primary: #0a0a1a;
+        --bg-secondary: #111128;
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --text-primary: #e8e8f0;
+        --text-secondary: #8888aa;
+        --accent: #7c5cfc;
+        --accent-glow: rgba(124, 92, 252, 0.4);
+        --compare: #ff4d6a;
+        --swap: #ffb84d;
+        --sorted: #4dffb8;
+        --bar-default: #5a5aff;
+        --radius: 14px;
+        --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* ========== Background Blobs ========== */
+      .bg-blob {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.35;
+      }
+      .bg-blob.one {
+        width: 500px;
+        height: 500px;
+        background: #7c5cfc;
+        top: -10%;
+        left: -5%;
+      }
+      .bg-blob.two {
+        width: 400px;
+        height: 400px;
+        background: #ff4d6a;
+        bottom: -10%;
+        right: -5%;
+      }
+      .bg-blob.three {
+        width: 300px;
+        height: 300px;
+        background: #4dffb8;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      /* ========== Layout ========== */
+      .app {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px 20px 40px;
+      }
+
+      /* ========== Header ========== */
+      header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      header h1 {
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 700;
+        background: linear-gradient(135deg, #7c5cfc, #ff4d6a, #4dffb8);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      header p {
+        color: var(--text-secondary);
+        margin-top: 6px;
+        font-size: 0.9rem;
+      }
+
+      .glass {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        padding: 22px 26px;
+        overflow: visible;
+        position: relative;
+        z-index: 10;
+      }
+
+      /* ========== Controls Grid ========== */
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: end;
+        margin-bottom: 20px;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .control-group label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* ========== Custom Dropdown ========== */
+      .custom-dropdown {
+        position: relative;
+        min-width: 180px;
+        z-index: 101;
+      }
+      .dropdown-toggle {
+        appearance: none;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text-primary);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 36px 10px 14px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: var(--transition);
+        outline: none;
+        width: 100%;
+        text-align: left;
+        position: relative;
+      }
+      .dropdown-toggle::after {
+        content: '';
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 6px solid var(--text-secondary);
+        transition: transform 0.3s ease;
+      }
+      .custom-dropdown.open .dropdown-toggle::after {
+        transform: translateY(-50%) rotate(180deg);
+      }
+      .dropdown-toggle:hover,
+      .custom-dropdown.open .dropdown-toggle {
+        border-color: var(--accent);
+        box-shadow: 0 0 12px var(--accent-glow);
+      }
+
+      /* Backdrop overlay */
+      .dropdown-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 5;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      .dropdown-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      /* Dropdown menu */
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        min-width: 220px;
+        background: rgba(20, 20, 50, 0.95);
+        border: 1px solid rgba(124, 92, 252, 0.3);
+        border-radius: 12px;
+        padding: 8px 0;
+        z-index: 100;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
+        pointer-events: none;
+        transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--accent-glow);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .custom-dropdown.open .dropdown-menu {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+
+      .dropdown-group-label {
+        padding: 8px 16px 4px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .dropdown-group-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--glass-border);
+      }
+      .dropdown-divider {
+        height: 1px;
+        background: var(--glass-border);
+        margin: 6px 12px;
+      }
+      .dropdown-item {
+        padding: 9px 16px 9px 28px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+        font-family: inherit;
+      }
+      .dropdown-item:hover {
+        background: rgba(124, 92, 252, 0.15);
+        color: var(--text-primary);
+        padding-left: 32px;
+      }
+      .dropdown-item.selected {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .dropdown-item.selected::before {
+        content: '';
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent-glow);
+      }
+
+      /* Hidden native select for form fallback */
+      select#algorithm {
+        display: none;
+      }
+
+      /* Sliders */
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 140px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        outline: none;
+        cursor: pointer;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 2px solid var(--bg-primary);
+        box-shadow: 0 0 8px var(--accent-glow);
+        transition: var(--transition);
+      }
+      input[type="range"]::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+      }
+      .slider-value {
+        font-size: 0.8rem;
+        color: var(--accent);
+        font-weight: 600;
+        min-width: 30px;
+        text-align: center;
+      }
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Buttons */
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-left: auto;
+      }
+      .btn {
+        padding: 10px 22px;
+        border: none;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .btn:active {
+        transform: scale(0.95);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .btn-start {
+        background: linear-gradient(135deg, #7c5cfc, #6244e0);
+        color: #fff;
+      }
+      .btn-start:hover:not(:disabled) {
+        box-shadow: 0 4px 20px var(--accent-glow);
+      }
+      .btn-stop {
+        background: linear-gradient(135deg, #ff4d6a, #d63a55);
+        color: #fff;
+      }
+      .btn-stop:hover:not(:disabled) {
+        box-shadow: 0 4px 20px rgba(255, 77, 106, 0.4);
+      }
+      .btn-reset {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+        border: 1px solid var(--glass-border);
+      }
+      .btn-reset:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.14);
+      }
+
+      /* ========== Algorithm Description ========== */
+      .algo-desc {
+        margin-bottom: 20px;
+        padding: 16px 20px;
+        border-radius: 10px;
+        background: rgba(124, 92, 252, 0.08);
+        border-left: 3px solid var(--accent);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        color: var(--text-secondary);
+        transition: var(--transition);
+        min-height: 56px;
+      }
+      .algo-desc strong {
+        color: var(--text-primary);
+      }
+
+      /* ========== Legend ========== */
+      .legend {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+      .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+      }
+
+      /* ========== Visualizer ========== */
+      .visualizer {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 2px;
+        height: 400px;
+        padding: 20px 10px 0;
+        border-radius: var(--radius);
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
+      }
+      .bar {
+        flex: 1;
+        max-width: 40px;
+        border-radius: 4px 4px 0 0;
+        background: var(--bar-default);
+        transition:
+          background 0.15s ease,
+          box-shadow 0.15s ease;
+        position: relative;
+        will-change: transform;
+        display: flex;
+        justify-content: center;
+      }
+      .bar .bar-label {
+        position: absolute;
+        top: -18px;
+        font-size: 0.6rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        pointer-events: none;
+        white-space: nowrap;
+      }
+      /* ========== Search Mode: Grid of Boxes ========== */
+      .visualizer.search-mode {
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 120px;
+        padding: 20px 16px;
+        gap: 6px;
+      }
+      .visualizer.search-mode .bar {
+        flex: 0 0 auto;
+        width: 48px;
+        height: 48px;
+        max-width: none;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+      }
+      .visualizer.search-mode .bar .bar-label {
+        position: static;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: inherit;
+        pointer-events: none;
+      }
+      .visualizer.search-mode .bar .bar-label.is-target {
+        color: #ffd700;
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+      }
+      .visualizer.search-mode .bar.comparing {
+        border-color: var(--compare);
+        transform: scale(1.1);
+      }
+      .visualizer.search-mode .bar.found {
+        border-color: #ffd700;
+        transform: scale(1.15);
+      }
+      .visualizer.search-mode .bar.eliminated {
+        opacity: 0.35;
+        transform: scale(0.92);
+        border-color: transparent;
+      }
+      .bar.comparing .bar-label,
+      .bar.swapping .bar-label,
+      .bar.found .bar-label {
+        color: #fff;
+      }
+      .bar.comparing {
+        background: var(--compare);
+        box-shadow: 0 0 12px rgba(255, 77, 106, 0.5);
+      }
+      .bar.swapping {
+        background: var(--swap);
+        box-shadow: 0 0 12px rgba(255, 184, 77, 0.5);
+      }
+      .bar.sorted {
+        background: var(--sorted);
+        box-shadow: 0 0 8px rgba(77, 255, 184, 0.3);
+      }
+      .bar.found {
+        background: #ffd700;
+        box-shadow: 0 0 18px rgba(255, 215, 0, 0.6);
+        transform: scaleY(1.05);
+      }
+      .bar.eliminated {
+        background: rgba(90, 90, 255, 0.25);
+        box-shadow: none;
+      }
+      .bar.merge-drop {
+        animation: mergeDrop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      @keyframes mergeDrop {
+        0% {
+          transform: scaleY(0);
+          opacity: 0.3;
+        }
+        60% {
+          transform: scaleY(1.08);
+          opacity: 1;
+        }
+        100% {
+          transform: scaleY(1);
+          opacity: 1;
+        }
+      }
+
+      /* ========== Search Result Message ========== */
+      .search-result {
+        text-align: center;
+        margin-top: 12px;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: none;
+        animation: fadeInUp 0.4s ease;
+      }
+      .search-result.found {
+        display: block;
+        background: rgba(77, 255, 184, 0.1);
+        border: 1px solid rgba(77, 255, 184, 0.3);
+        color: var(--sorted);
+      }
+      .search-result.not-found {
+        display: block;
+        background: rgba(255, 77, 106, 0.1);
+        border: 1px solid rgba(255, 77, 106, 0.3);
+        color: var(--compare);
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ========== Stats ========== */
+      .stats {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        margin-top: 18px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+      .stats span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      /* ========== Responsive ========== */
+      @media (max-width: 700px) {
+        .controls {
+          justify-content: center;
+        }
+        .btn-group {
+          margin-left: 0;
+          width: 100%;
+          justify-content: center;
+        }
+        .visualizer {
+          height: 280px;
+        }
+        input[type="range"] {
+          width: 110px;
+        }
+      }
+
+      /* ========== Search Input ========== */
+      .search-group {
+        transition: var(--transition);
+        overflow: hidden;
+      }
+      .search-group.hidden {
+        width: 0;
+        opacity: 0;
+        padding: 0;
+        margin: 0;
+        pointer-events: none;
+      }
+      .search-input {
+        appearance: none;
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text-primary);
+        border: 1px solid var(--glass-border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        font-family: inherit;
+        font-size: 0.85rem;
+        width: 100px;
+        outline: none;
+        transition: var(--transition);
+      }
+      .search-input:hover,
+      .search-input:focus {
+        border-color: var(--accent);
+      }
+      .search-input::placeholder {
+        color: var(--text-secondary);
+      }
+      .btn-random {
+        padding: 10px 12px;
+        border: none;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: rgba(124, 92, 252, 0.15);
+        color: var(--accent);
+        border: 1px solid rgba(124, 92, 252, 0.3);
+        transition: var(--transition);
+        white-space: nowrap;
+      }
+      .btn-random:hover {
+        background: rgba(124, 92, 252, 0.25);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Background Decorative Blobs -->
+    <div class="bg-blob one"></div>
+    <div class="bg-blob two"></div>
+    <div class="bg-blob three"></div>
+
+    <div class="app">
+      <!-- Dropdown Backdrop Overlay -->
+      <div class="dropdown-backdrop" id="dropdownBackdrop"></div>
+      <!-- Header -->
+      <header>
+        <h1>⚡ Sorting & Searching Visualizer</h1>
+        <p>
+          Visualisasi interaktif untuk memahami cara kerja algoritma sorting &
+          searching
+        </p>
+      </header>
+
+      <!-- Control Panel -->
+      <div class="glass" style="margin-bottom: 20px">
+        <div class="controls">
+          <!-- Algorithm Selector (Custom Dropdown) -->
+          <div class="control-group">
+            <label>Algoritma</label>
+            <div class="custom-dropdown" id="customDropdown">
+              <button type="button" class="dropdown-toggle" id="dropdownToggle">Bubble Sort</button>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <div class="dropdown-group-label">Sorting</div>
+                <div class="dropdown-item selected" data-value="bubble">Bubble Sort</div>
+                <div class="dropdown-item" data-value="selection">Selection Sort</div>
+                <div class="dropdown-item" data-value="quick">Quick Sort</div>
+                <div class="dropdown-item" data-value="merge">Merge Sort</div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-group-label">Searching</div>
+                <div class="dropdown-item" data-value="linear">Linear Search</div>
+                <div class="dropdown-item" data-value="binary">Binary Search</div>
+              </div>
+            </div>
+            <!-- Hidden native select for script compatibility -->
+            <select id="algorithm" style="display:none">
+              <option value="bubble" selected>Bubble Sort</option>
+              <option value="selection">Selection Sort</option>
+              <option value="quick">Quick Sort</option>
+              <option value="merge">Merge Sort</option>
+              <option value="linear">Linear Search</option>
+              <option value="binary">Binary Search</option>
+            </select>
+          </div>
+
+          <!-- Speed Slider -->
+          <div class="control-group">
+            <label>Kecepatan</label>
+            <div class="slider-row">
+              <span style="font-size: 0.7rem">🐢</span>
+              <input type="range" id="speed" min="1" max="100" value="50" />
+              <span style="font-size: 0.7rem">🐇</span>
+              <span class="slider-value" id="speedVal">50</span>
+            </div>
+          </div>
+
+          <!-- Size Slider -->
+          <div class="control-group">
+            <label>Ukuran Array</label>
+            <div class="slider-row">
+              <input
+                type="range"
+                id="arraySize"
+                min="10"
+                max="120"
+                value="50"
+              />
+              <span class="slider-value" id="sizeVal">50</span>
+            </div>
+          </div>
+
+          <!-- Search Target (hidden by default) -->
+          <div class="control-group search-group hidden" id="searchGroup">
+            <label for="searchTarget">Cari Nilai</label>
+            <div style="display: flex; gap: 6px; align-items: center">
+              <input
+                type="number"
+                class="search-input"
+                id="searchTarget"
+                placeholder="misal: 42"
+              />
+              <button
+                class="btn-random"
+                onclick="fillRandomTarget()"
+                title="Pilih nilai acak dari array"
+              >
+                🎲
+              </button>
+            </div>
+          </div>
+
+          <!-- Buttons -->
+          <div class="btn-group">
+            <button
+              class="btn btn-start"
+              id="btnStart"
+              onclick="startSorting()"
+            >
+              ▶ Start
+            </button>
+            <button
+              class="btn btn-stop"
+              id="btnStop"
+              onclick="stopSorting()"
+              disabled
+            >
+              ⏸ Stop
+            </button>
+            <button class="btn btn-reset" id="btnReset" onclick="resetArray()">
+              ↻ Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Algorithm Description -->
+        <div class="algo-desc" id="algoDesc"></div>
+
+        <!-- Legend -->
+        <div class="legend">
+          <div class="legend-item">
+            <div
+              class="legend-dot"
+              style="background: var(--bar-default)"
+            ></div>
+            Default
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--compare)"></div>
+            Membandingkan
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--swap)"></div>
+            Menukar
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: var(--sorted)"></div>
+            Terurut
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background: #ffd700"></div>
+            Ditemukan
+          </div>
+        </div>
+      </div>
+
+      <!-- Visualizer Area -->
+      <div class="visualizer" id="visualizer"></div>
+
+      <!-- Search Result Message -->
+      <div class="search-result" id="searchResult"></div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div>Perbandingan: <span id="statComp">0</span></div>
+        <div id="statSwapWrap">Penukaran: <span id="statSwap">0</span></div>
+        <div>Waktu: <span id="statTime">0.00s</span></div>
+      </div>
+    </div>
+
+    <script>
+      // =====================================================================
+      //  Sorting Algorithm Visualizer — JavaScript (ES6+)
+      //  Menggunakan async/await untuk animasi non-blocking
+      // =====================================================================
+
+      // --- State Global ---
+      let array = [];
+      let isSorting = false;
+      let stopRequested = false; // Flag untuk menghentikan iterasi secara instan
+      let comparisons = 0;
+      let swaps = 0;
+      let startTime = 0;
+
+      // --- Referensi DOM ---
+      const visualizer = document.getElementById("visualizer");
+      const algoSelect = document.getElementById("algorithm");
+      const speedSlider = document.getElementById("speed");
+      const sizeSlider = document.getElementById("arraySize");
+      const btnStart = document.getElementById("btnStart");
+      const btnStop = document.getElementById("btnStop");
+      const btnReset = document.getElementById("btnReset");
+      const statComp = document.getElementById("statComp");
+      const statSwap = document.getElementById("statSwap");
+      const statTime = document.getElementById("statTime");
+      const algoDesc = document.getElementById("algoDesc");
+      const speedVal = document.getElementById("speedVal");
+      const sizeVal = document.getElementById("sizeVal");
+      const searchGroup = document.getElementById("searchGroup");
+      const searchTarget = document.getElementById("searchTarget");
+      const statSwapWrap = document.getElementById("statSwapWrap");
+      const searchResult = document.getElementById("searchResult");
+
+      // --- Deskripsi Algoritma ---
+      const descriptions = {
+        bubble: `<strong>Bubble Sort</strong> — Algoritma paling sederhana. Membandingkan dua elemen bersebelahan secara berulang dan menukarnya jika urutannya salah. Kompleksitas waktu: <strong>O(n²)</strong>. Cocok untuk data kecil atau tujuan pembelajaran.`,
+        selection: `<strong>Selection Sort</strong> — Mencari elemen terkecil dari bagian yang belum terurut, lalu menempatkannya di posisi yang benar. Kompleksitas waktu: <strong>O(n²)</strong>. Jumlah penukaran lebih sedikit dibanding Bubble Sort.`,
+        quick: `<strong>Quick Sort</strong> — Algoritma <em>divide and conquer</em> yang memilih pivot, lalu mempartisi array menjadi dua bagian. Kompleksitas rata-rata: <strong>O(n log n)</strong>. Salah satu algoritma pengurutan tercepat dalam praktik.`,
+        merge: `<strong>Merge Sort</strong> — Algoritma <em>divide and conquer</em> yang membagi array menjadi dua bagian, mengurutkan masing-masing secara rekursif, lalu menggabungkannya kembali. Kompleksitas waktu: <strong>O(n log n)</strong> di semua kasus. Stabil dan konsisten, cocok untuk data besar.`,
+        linear: `<strong>Linear Search</strong> — Menelusuri array satu per satu dari awal hingga akhir sampai elemen ditemukan. Kompleksitas waktu: <strong>O(n)</strong>. Tidak memerlukan array terurut. Sederhana dan mudah dipahami.`,
+        binary: `<strong>Binary Search</strong> — Mencari elemen dengan membagi rentang pencarian menjadi dua setiap iterasi. Membutuhkan array <strong>terurut</strong> (akan di-sort otomatis). Kompleksitas waktu: <strong>O(log n)</strong>. Sangat efisien untuk data besar.`,
+      };
+
+      // --- Utilitas: Delay berdasarkan slider kecepatan ---
+      function getDelay() {
+        // Slider 1 (lambat) → 300ms, Slider 100 (cepat) → 2ms
+        const v = parseInt(speedSlider.value);
+        return Math.max(2, 310 - v * 3.1);
+      }
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      /**
+       * Mengecek apakah proses harus dihentikan.
+       * Dilempar sebagai exception agar iterasi berhenti instan.
+       */
+      function checkStop() {
+        if (stopRequested) throw new Error("STOP");
+      }
+
+      // --- Render Array ke DOM ---
+      function renderBars() {
+        visualizer.innerHTML = "";
+        const maxVal = Math.max(...array);
+        const algo = algoSelect.value;
+        const inSearchMode = isSearchAlgo(algo);
+
+        // Toggle search-mode class pada visualizer
+        if (inSearchMode) {
+          visualizer.classList.add("search-mode");
+        } else {
+          visualizer.classList.remove("search-mode");
+        }
+
+        const searchVal = inSearchMode ? parseInt(searchTarget.value) : NaN;
+        const showLabels = array.length <= 40 || inSearchMode;
+
+        array.forEach((val) => {
+          const bar = document.createElement("div");
+          bar.className = "bar";
+
+          if (inSearchMode) {
+            // Mode Searching: kotak seragam, tanpa tinggi dinamis
+            const label = document.createElement("span");
+            label.className = "bar-label";
+            if (val === searchVal) {
+              label.classList.add("is-target");
+            }
+            label.textContent = val;
+            bar.appendChild(label);
+          } else {
+            // Mode Sorting: diagram batang dengan tinggi dinamis
+            bar.style.height = `${(val / maxVal) * 100}%`;
+            if (showLabels) {
+              const label = document.createElement("span");
+              label.className = "bar-label";
+              label.textContent = val;
+              bar.appendChild(label);
+            }
+          }
+
+          visualizer.appendChild(bar);
+        });
+      }
+
+      // --- Update label pada bar ---
+      function updateBarLabel(index) {
+        const bars = visualizer.children;
+        if (!bars[index]) return;
+        const label = bars[index].querySelector(".bar-label");
+        if (label) label.textContent = array[index];
+      }
+
+      // --- Isi search target dengan nilai acak dari array ---
+      function fillRandomTarget() {
+        if (array.length === 0) return;
+        const randomVal = array[Math.floor(Math.random() * array.length)];
+        searchTarget.value = randomVal;
+      }
+
+      // --- Tampilkan pesan hasil pencarian ---
+      function showSearchResult(found, target, index) {
+        if (found) {
+          searchResult.className = "search-result found";
+          searchResult.innerHTML = `✅ Nilai <strong>${target}</strong> ditemukan pada indeks ke-<strong>${index}</strong>`;
+        } else {
+          searchResult.className = "search-result not-found";
+          searchResult.innerHTML = `❌ Nilai <strong>${target}</strong> tidak ditemukan dalam array`;
+        }
+      }
+
+      function hideSearchResult() {
+        searchResult.className = "search-result";
+        searchResult.style.display = "none";
+      }
+
+      // --- Update warna bar individual ---
+      function colorBar(index, className) {
+        const bars = visualizer.children;
+        if (bars[index]) bars[index].className = "bar " + className;
+      }
+
+      function clearBarColor(index) {
+        const bars = visualizer.children;
+        if (bars[index]) bars[index].className = "bar";
+      }
+
+      // --- Update tinggi bar setelah swap ---
+      function updateBarHeight(index) {
+        const bars = visualizer.children;
+        const maxVal = Math.max(...array);
+        if (bars[index]) {
+          bars[index].style.height = `${(array[index] / maxVal) * 100}%`;
+          updateBarLabel(index);
+        }
+      }
+
+      /**
+       * Animasi swap: bar meluncur ke posisi satu sama lain.
+       * Menghitung jarak piksel antar bar, lalu translateX bolak-balik.
+       */
+      async function animateSwap(idxA, idxB) {
+        if (idxA === idxB) return;
+        const bars = visualizer.children;
+        const barA = bars[idxA];
+        const barB = bars[idxB];
+        if (!barA || !barB) return;
+
+        // Hitung jarak horizontal antar bar
+        const rectA = barA.getBoundingClientRect();
+        const rectB = barB.getBoundingClientRect();
+        const dist = rectB.left - rectA.left;
+
+        // Durasi animasi sesuai kecepatan (min 80ms, max 350ms)
+        const v = parseInt(speedSlider.value);
+        const duration = Math.max(80, 360 - v * 3);
+
+        // Warnai sebagai swapping
+        colorBar(idxA, "swapping");
+        colorBar(idxB, "swapping");
+
+        // Terapkan transisi geser
+        barA.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, box-shadow 0.15s ease`;
+        barB.style.transition = `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1), background 0.15s ease, box-shadow 0.15s ease`;
+        barA.style.transform = `translateX(${dist}px)`;
+        barB.style.transform = `translateX(${-dist}px)`;
+
+        // Tunggu animasi selesai
+        await delay(duration + 20);
+
+        // Swap data di array
+        [array[idxA], array[idxB]] = [array[idxB], array[idxA]];
+
+        // Reset transform dan update tinggi
+        barA.style.transition = "";
+        barB.style.transition = "";
+        barA.style.transform = "";
+        barB.style.transform = "";
+        updateBarHeight(idxA);
+        updateBarHeight(idxB);
+        updateBarLabel(idxA);
+        updateBarLabel(idxB);
+
+        swaps++;
+        updateStats();
+      }
+
+      // --- Update statistik ---
+      function updateStats() {
+        statComp.textContent = comparisons;
+        statSwap.textContent = swaps;
+        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        statTime.textContent = elapsed + "s";
+      }
+
+      // --- Generate array acak ---
+      function generateArray(size) {
+        array = [];
+        for (let i = 0; i < size; i++) {
+          array.push(Math.floor(Math.random() * 95) + 5); // 5 – 99
+        }
+      }
+
+      // --- Reset ---
+      function resetArray() {
+        if (isSorting) {
+          stopSorting();
+          return;
+        }
+        const size = parseInt(sizeSlider.value);
+        generateArray(size);
+
+        // Sinkronisasi search target dengan array (khusus mode searching)
+        if (isSearchAlgo(algoSelect.value)) {
+          let targetVal = parseInt(searchTarget.value);
+
+          if (isNaN(targetVal)) {
+            // Jika input kosong, otomatis isi dengan nilai acak dari array
+            targetVal = array[Math.floor(Math.random() * array.length)];
+            searchTarget.value = targetVal;
+          }
+
+          // Hapus semua duplikat target dari array (ganti dengan nilai acak lain)
+          for (let i = 0; i < array.length; i++) {
+            while (array[i] === targetVal) {
+              array[i] = Math.floor(Math.random() * 95) + 5;
+            }
+          }
+
+          // Sisipkan target tepat 1 kali di posisi acak
+          const randomIdx = Math.floor(Math.random() * array.length);
+          array[randomIdx] = targetVal;
+        }
+
+        comparisons = 0;
+        swaps = 0;
+        statComp.textContent = "0";
+        statSwap.textContent = "0";
+        statTime.textContent = "0.00s";
+        renderBars();
+      }
+
+      // --- Kontrol tombol ---
+      function setButtonState(sorting) {
+        btnStart.disabled = sorting;
+        btnStop.disabled = !sorting;
+        sizeSlider.disabled = sorting;
+        algoSelect.disabled = sorting;
+      }
+
+      // --- Animasi bar "selesai" (hijau berurutan) ---
+      async function markAllSorted() {
+        const bars = visualizer.children;
+        for (let i = 0; i < bars.length; i++) {
+          bars[i].className = "bar sorted";
+          await delay(12);
+        }
+      }
+
+      // =====================================================================
+      //  ALGORITMA SORTING
+      // =====================================================================
+
+      // --- Bubble Sort ---
+      async function bubbleSort() {
+        const n = array.length;
+        for (let i = 0; i < n - 1; i++) {
+          for (let j = 0; j < n - i - 1; j++) {
+            checkStop();
+            colorBar(j, "comparing");
+            colorBar(j + 1, "comparing");
+            comparisons++;
+            updateStats();
+            await delay(getDelay());
+
+            if (array[j] > array[j + 1]) {
+              await animateSwap(j, j + 1);
+            }
+            clearBarColor(j);
+            clearBarColor(j + 1);
+          }
+          colorBar(n - i - 1, "sorted");
+        }
+        colorBar(0, "sorted");
+      }
+
+      // --- Selection Sort ---
+      async function selectionSort() {
+        const n = array.length;
+        for (let i = 0; i < n - 1; i++) {
+          let minIdx = i;
+          colorBar(i, "comparing");
+          for (let j = i + 1; j < n; j++) {
+            checkStop();
+            colorBar(j, "comparing");
+            comparisons++;
+            updateStats();
+            await delay(getDelay());
+
+            if (array[j] < array[minIdx]) {
+              if (minIdx !== i) clearBarColor(minIdx);
+              minIdx = j;
+              colorBar(minIdx, "comparing");
+            } else {
+              clearBarColor(j);
+            }
+          }
+          if (minIdx !== i) {
+            await animateSwap(i, minIdx);
+            clearBarColor(minIdx);
+          }
+          colorBar(i, "sorted");
+        }
+        colorBar(array.length - 1, "sorted");
+      }
+
+      // --- Quick Sort ---
+      async function quickSort(lo = 0, hi = array.length - 1) {
+        if (lo >= hi) return;
+        checkStop();
+        const pivotIdx = await partition(lo, hi);
+        colorBar(pivotIdx, "sorted");
+        await quickSort(lo, pivotIdx - 1);
+        await quickSort(pivotIdx + 1, hi);
+      }
+
+      async function partition(lo, hi) {
+        const pivot = array[hi];
+        colorBar(hi, "comparing");
+        let i = lo - 1;
+        for (let j = lo; j < hi; j++) {
+          checkStop();
+          colorBar(j, "comparing");
+          comparisons++;
+          updateStats();
+          await delay(getDelay());
+
+          if (array[j] <= pivot) {
+            i++;
+            if (i !== j) {
+              await animateSwap(i, j);
+            }
+            clearBarColor(i);
+            clearBarColor(j);
+          } else {
+            clearBarColor(j);
+          }
+        }
+        if (i + 1 !== hi) {
+          await animateSwap(i + 1, hi);
+        }
+        clearBarColor(hi);
+        return i + 1;
+      }
+
+      // --- Merge Sort ---
+      async function mergeSort(lo = 0, hi = array.length - 1) {
+        if (lo >= hi) return;
+        checkStop();
+        const mid = Math.floor((lo + hi) / 2);
+        await mergeSort(lo, mid);
+        await mergeSort(mid + 1, hi);
+        await merge(lo, mid, hi);
+      }
+
+      /**
+       * In-place merge menggunakan animateSwap.
+       * Ketika elemen dari bagian kanan lebih kecil, ia digeser (swap berurutan)
+       * ke posisi yang benar — mirip insertion sort, sehingga bar terlihat meluncur.
+       */
+      async function merge(lo, mid, hi) {
+        let i = lo;
+        let j = mid + 1;
+
+        while (i <= mid && j <= hi) {
+          checkStop();
+
+          // Bandingkan elemen kiri dan kanan
+          colorBar(i, "comparing");
+          colorBar(j, "comparing");
+          comparisons++;
+          updateStats();
+          await delay(getDelay());
+
+          if (array[i] <= array[j]) {
+            // Elemen kiri sudah di posisi benar
+            clearBarColor(i);
+            clearBarColor(j);
+            i++;
+          } else {
+            // Elemen kanan perlu digeser ke posisi i
+            // Swap berturut-turut dari j ke i (bar meluncur ke kiri)
+            clearBarColor(i);
+            clearBarColor(j);
+            for (let k = j; k > i; k--) {
+              checkStop();
+              await animateSwap(k - 1, k);
+              clearBarColor(k - 1);
+              clearBarColor(k);
+            }
+            // Semua indeks bergeser
+            mid++;
+            j++;
+            i++;
+          }
+        }
+      }
+
+      // --- Linear Search ---
+      async function linearSearch(target) {
+        for (let i = 0; i < array.length; i++) {
+          checkStop();
+          colorBar(i, "comparing");
+          comparisons++;
+          updateStats();
+          await delay(getDelay());
+
+          if (array[i] === target) {
+            colorBar(i, "found");
+            return i;
+          }
+          clearBarColor(i);
+        }
+        return -1;
+      }
+
+      // --- Binary Search ---
+      async function binarySearch(target) {
+        let lo = 0,
+          hi = array.length - 1;
+
+        // Dim seluruh bar dulu, lalu highlight range aktif
+        while (lo <= hi) {
+          checkStop();
+
+          // Tandai elemen di luar range sebagai eliminated
+          for (let x = 0; x < array.length; x++) {
+            if (x < lo || x > hi) colorBar(x, "eliminated");
+            else clearBarColor(x);
+          }
+
+          const mid = Math.floor((lo + hi) / 2);
+          colorBar(mid, "comparing");
+          comparisons++;
+          updateStats();
+          await delay(getDelay() * 3);
+
+          if (array[mid] === target) {
+            colorBar(mid, "found");
+            return mid;
+          } else if (array[mid] < target) {
+            for (let x = lo; x <= mid; x++) colorBar(x, "eliminated");
+            await delay(getDelay() * 2);
+            lo = mid + 1;
+          } else {
+            for (let x = mid; x <= hi; x++) colorBar(x, "eliminated");
+            await delay(getDelay() * 2);
+            hi = mid - 1;
+          }
+        }
+        return -1;
+      }
+
+      // =====================================================================
+      //  START & STOP
+      // =====================================================================
+
+      function isSearchAlgo(algo) {
+        return algo === "linear" || algo === "binary";
+      }
+
+      async function startSorting() {
+        if (isSorting) return;
+        const algo = algoSelect.value;
+
+        // Validasi input pencarian
+        if (isSearchAlgo(algo)) {
+          const target = parseInt(searchTarget.value);
+          if (isNaN(target)) {
+            searchTarget.style.borderColor = "var(--compare)";
+            searchTarget.focus();
+            setTimeout(() => (searchTarget.style.borderColor = ""), 1500);
+            return;
+          }
+        }
+
+        isSorting = true;
+        stopRequested = false;
+        comparisons = 0;
+        swaps = 0;
+        startTime = performance.now();
+        setButtonState(true);
+        hideSearchResult();
+
+        // Reset warna semua bar
+        Array.from(visualizer.children).forEach((b) => {
+          b.className = "bar";
+        });
+
+        try {
+          if (algo === "bubble") {
+            await bubbleSort();
+            await markAllSorted();
+          } else if (algo === "selection") {
+            await selectionSort();
+            await markAllSorted();
+          } else if (algo === "quick") {
+            await quickSort();
+            await markAllSorted();
+          } else if (algo === "merge") {
+            await mergeSort();
+            await markAllSorted();
+          } else if (algo === "linear") {
+            const target = parseInt(searchTarget.value);
+            const idx = await linearSearch(target);
+            showSearchResult(idx !== -1, target, idx);
+            if (idx === -1) {
+              Array.from(visualizer.children).forEach(
+                (b) => (b.className = "bar comparing"),
+              );
+              await delay(600);
+              Array.from(visualizer.children).forEach(
+                (b) => (b.className = "bar"),
+              );
+            }
+          } else if (algo === "binary") {
+            array.sort((a, b) => a - b);
+            renderBars();
+            await delay(400);
+            const target = parseInt(searchTarget.value);
+            const idx = await binarySearch(target);
+            showSearchResult(idx !== -1, target, idx);
+            if (idx === -1) {
+              Array.from(visualizer.children).forEach(
+                (b) => (b.className = "bar comparing"),
+              );
+              await delay(600);
+              Array.from(visualizer.children).forEach(
+                (b) => (b.className = "bar"),
+              );
+            }
+          }
+        } catch (e) {
+          if (e.message !== "STOP") console.error(e);
+        }
+
+        isSorting = false;
+        stopRequested = false;
+        setButtonState(false);
+        updateStats();
+      }
+
+      function stopSorting() {
+        stopRequested = true;
+      }
+
+      // =====================================================================
+      //  EVENT LISTENERS
+      // =====================================================================
+
+      algoSelect.addEventListener("change", () => {
+        const algo = algoSelect.value;
+        algoDesc.innerHTML = descriptions[algo];
+
+        // Toggle search input visibility
+        if (isSearchAlgo(algo)) {
+          searchGroup.classList.remove("hidden");
+          statSwapWrap.style.display = "none";
+        } else {
+          searchGroup.classList.add("hidden");
+          statSwapWrap.style.display = "";
+        }
+
+        // Re-render bars agar label search-mode muncul/hilang
+        if (!isSorting) renderBars();
+      });
+      speedSlider.addEventListener("input", () => {
+        speedVal.textContent = speedSlider.value;
+      });
+      sizeSlider.addEventListener("input", () => {
+        sizeVal.textContent = sizeSlider.value;
+        if (!isSorting) resetArray();
+      });
+
+      // =====================================================================
+      //  CUSTOM DROPDOWN LOGIC
+      // =====================================================================
+      const customDropdown = document.getElementById("customDropdown");
+      const dropdownToggle = document.getElementById("dropdownToggle");
+      const dropdownMenu = document.getElementById("dropdownMenu");
+      const dropdownBackdrop = document.getElementById("dropdownBackdrop");
+      const dropdownItems = dropdownMenu.querySelectorAll(".dropdown-item");
+
+      function openDropdown() {
+        customDropdown.classList.add("open");
+        dropdownBackdrop.classList.add("active");
+      }
+
+      function closeDropdown() {
+        customDropdown.classList.remove("open");
+        dropdownBackdrop.classList.remove("active");
+      }
+
+      dropdownToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (customDropdown.classList.contains("open")) {
+          closeDropdown();
+        } else {
+          openDropdown();
+        }
+      });
+
+      dropdownBackdrop.addEventListener("click", closeDropdown);
+
+      dropdownItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const value = item.dataset.value;
+          const label = item.textContent;
+
+          // Update visual selection
+          dropdownItems.forEach((i) => i.classList.remove("selected"));
+          item.classList.add("selected");
+          dropdownToggle.textContent = label;
+
+          // Sync with native select
+          algoSelect.value = value;
+          algoSelect.dispatchEvent(new Event("change"));
+
+          closeDropdown();
+        });
+      });
+
+      // Close on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeDropdown();
+      });
+
+      // Update search target input → re-render labels
+      searchTarget.addEventListener("input", () => {
+        if (!isSorting && isSearchAlgo(algoSelect.value)) {
+          renderBars();
+        }
+      });
+
+      // --- Inisialisasi ---
+      algoDesc.innerHTML = descriptions[algoSelect.value];
+      resetArray();
+    </script>
+  </body>
+</html>
