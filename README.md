@@ -42,4 +42,5 @@ Project ini dibuat murni menggunakan **HTML5, CSS3, dan Vanilla JavaScript**, se
 
 ## 📚 Lisensi
 
-Didistribusikan di bawah lisensi MIT. Lihat [LICENSE](LICENSE) untuk informasi lebih lanjut.
+Didistribusikan di bawah lisensi MIT. Lihat [LICENSE](LICENSE) untuk informasi lebih lanjut atau contact saya.
+
